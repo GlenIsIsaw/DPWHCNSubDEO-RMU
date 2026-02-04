@@ -10,6 +10,7 @@ import AddRecordModal from "./AddRecordModal";
 import FilePreviewModal from "./FilePreviewModal";
 import ConfirmActionModal from "./ConfirmActionModal";
 import Spinner from "react-bootstrap/Spinner";
+import { getCurrentUser } from "../../db/userService"; // <-- import userService
 
 // Backend API base URL
 const API_BASE = "http://localhost:5000";
@@ -35,11 +36,10 @@ function RecordTable() {
   useEffect(() => {
     const loadRecords = async () => {
       try {
-        setLoading(true); // start loading
+        setLoading(true);
         const res = await fetch(`${API_BASE}/records`);
         let data = await res.json();
 
-        // Map backend fields to frontend fields
         data = data.map((r) => ({
           ...r,
           from: r.fromOffice,
@@ -50,7 +50,7 @@ function RecordTable() {
       } catch (err) {
         console.error("Failed to load records:", err);
       } finally {
-        setLoading(false); // finish loading
+        setLoading(false);
       }
     };
     loadRecords();
@@ -60,6 +60,9 @@ function RecordTable() {
   // Save new record
   // ======================
   const handleSaveRecord = async (newRecord) => {
+    const currentUser = getCurrentUser();
+    const username = currentUser ? currentUser.username : "Unknown";
+
     const formData = new FormData();
     formData.append("recordNo", newRecord.recordNo);
     formData.append("dateReceived", newRecord.dateReceived);
@@ -68,13 +71,14 @@ function RecordTable() {
     formData.append("subject", newRecord.subject);
     formData.append("route", newRecord.route);
     formData.append("file", newRecord.file);
+    formData.append("username", username); // send username for logging
 
     await fetch(`${API_BASE}/records`, {
       method: "POST",
       body: formData,
     });
 
-    // Reload records after adding
+    // Reload records
     const res = await fetch(`${API_BASE}/records`);
     let updatedRecords = await res.json();
     updatedRecords = updatedRecords.map((r) => ({
@@ -89,9 +93,22 @@ function RecordTable() {
   // ======================
   // Download record file
   // ======================
-  const handleDownload = (record) => {
-    if (!record.fileName) return;
-    const url = `http://localhost:5000/uploads/${record.fileName}`;
+  const handleDownload = async (record) => {
+    const currentUser = getCurrentUser();
+    const username = currentUser ? currentUser.username : "Unknown";
+
+    // Log download activity
+    await fetch(`${API_BASE}/activity/download`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username,
+        fileName: record.fileName,
+      }),
+    });
+
+    // Download the file
+    const url = `${API_BASE}/uploads/${record.fileName}`;
     const a = document.createElement("a");
     a.href = url;
     a.download = record.fileName;
@@ -102,7 +119,14 @@ function RecordTable() {
   // Delete record
   // ======================
   const handleDelete = async (id) => {
-    await fetch(`${API_BASE}/records/${id}`, { method: "DELETE" });
+    const currentUser = getCurrentUser();
+    const username = currentUser ? currentUser.username : "Unknown";
+
+    await fetch(`${API_BASE}/records/${id}?username=${username}`, {
+      method: "DELETE",
+    });
+
+    // Reload records
     const res = await fetch(`${API_BASE}/records`);
     let updatedRecords = await res.json();
     updatedRecords = updatedRecords.map((r) => ({
@@ -111,6 +135,26 @@ function RecordTable() {
       to: r.toOffice,
     }));
     setRecords(updatedRecords);
+  };
+
+  // ======================
+  // View record
+  // ======================
+  const handlePreviewRecord = async (record) => {
+    setPreviewRecord(record);
+    setShowPreview(true);
+
+    const currentUser = getCurrentUser();
+    const username = currentUser ? currentUser.username : "Unknown";
+
+    await fetch(`${API_BASE}/activity/view`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username,
+        recordNo: record.recordNo,
+      }),
+    });
   };
 
   // ======================
@@ -159,7 +203,10 @@ function RecordTable() {
   // ======================
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "300px" }}>
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "300px" }}
+      >
         <Spinner animation="border" variant="primary" role="status">
           <span className="visually-hidden">Loading...</span>
         </Spinner>
@@ -218,8 +265,20 @@ function RecordTable() {
             >
               <option value="">All Routes</option>
               <option value="All Section/Offices">All Section/Offices</option>
-              <option value="Administrative Section - HR">
+              <option value="Administrative Section">
+                Administrative Section
+              </option>
+              <option value="Administrative Section - GSO">
+                Administrative Section - GSO
+              </option>
+              <option value="Administrative Section - HRMDU">
                 Administrative Section - HR
+              </option>
+              <option value="Administrative Section - Records">
+                Administrative Section - Records
+              </option>
+              <option value="Administrative Section - Supply and Issuance">
+                Administrative Section - Supply and Issuance
               </option>
               <option value="Construction Section">Construction Section</option>
               <option value="Finance Section">Finance Section</option>
@@ -230,7 +289,7 @@ function RecordTable() {
               <option value="Planning and Design Section">
                 Planning and Design Section
               </option>
-              <option value="Procurement (BAC)">Procurement</option>
+              <option value="Procurement (BAC)">Procurement (BAC)</option>
               <option value="Office of the ADE">
                 Office of the Assistant District Engineer
               </option>

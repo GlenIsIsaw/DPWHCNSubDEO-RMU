@@ -158,14 +158,21 @@ function AddRecordModal({ show, handleClose, onSave }) {
                 style={{ borderRadius: "0.35rem" }}
               >
                 <option value="">Select Route</option>
-                <option value="All Section/Offices">
-                  All Section/Offices
-                </option>
+                <option value="All Section/Offices">All Section/Offices</option>
                 <option value="Administrative Section">
                   Administrative Section
                 </option>
-                <option value="Administrative Section - HR">
+                <option value="Administrative Section - GSO">
+                  Administrative Section - GSO
+                </option>
+                <option value="Administrative Section - HRMDU">
                   Administrative Section - HR
+                </option>
+                <option value="Administrative Section - Records">
+                  Administrative Section - Records
+                </option>
+                <option value="Administrative Section - Supply and Issuance">
+                  Administrative Section - Supply and Issuance
                 </option>
                 <option value="Construction Section">
                   Construction Section
@@ -178,7 +185,7 @@ function AddRecordModal({ show, handleClose, onSave }) {
                 <option value="Planning and Design Section">
                   Planning and Design Section
                 </option>
-                <option value="Procurement (BAC)">Procurement</option>
+                <option value="Procurement (BAC)">Procurement (BAC)</option>
                 <option value="Office of the ADE">
                   Office of the Assistant District Engineer
                 </option>
@@ -211,7 +218,11 @@ function AddRecordModal({ show, handleClose, onSave }) {
           >
             Cancel
           </Button>
-          <Button type="submit" variant="primary" className="fw-semibold btn-glow-blue">
+          <Button
+            type="submit"
+            variant="primary"
+            className="fw-semibold btn-glow-blue"
+          >
             <i className="bi bi-upload me-1"></i>
             Save Record
           </Button>

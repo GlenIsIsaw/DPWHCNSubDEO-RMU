@@ -2,14 +2,21 @@ import Navbar from "react-bootstrap/Navbar";
 import Container from "react-bootstrap/Container";
 import Nav from "react-bootstrap/Nav";
 import Button from "react-bootstrap/Button";
-import { logout } from "../../db/userService";
+import { getCurrentUser, logout } from "../../db/userService";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ConfirmActionModal from "../records/ConfirmActionModal"; // adjust path if needed
 
 function Topbar({ onMenuClick }) {
   const navigate = useNavigate();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Load logged-in user
+  useEffect(() => {
+    const user = getCurrentUser();
+    setCurrentUser(user);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -57,12 +64,9 @@ function Topbar({ onMenuClick }) {
 
           {/* Right side navigation */}
           <Nav className="ms-auto d-flex align-items-center gap-2">
-            <Nav.Link
-              className="text-white d-flex align-items-center"
-              style={{ fontWeight: 500 }}
-            >
+            <Nav.Link style={{ fontWeight: 500 }} className="text-white d-flex align-items-center">
               <i className="bi bi-person-circle me-1"></i>
-              Admin
+              {currentUser?.name || currentUser?.username || "Admin"}
             </Nav.Link>
             <Nav.Link
               className="text-white d-flex align-items-center"
