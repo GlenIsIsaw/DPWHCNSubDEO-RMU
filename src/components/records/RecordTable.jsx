@@ -157,6 +157,43 @@ function RecordTable() {
     });
   };
 
+  const handlePrint = async (record) => {
+  if (!record.fileName) return;
+
+  const url = `${API_BASE}/uploads/${record.fileName}`;
+  const extension = record.fileName.split(".").pop().toLowerCase();
+
+  if (["pdf"].includes(extension)) {
+    // PDF: open in new tab and print
+    const printWindow = window.open(url, "_blank");
+    printWindow.focus();
+    printWindow.onload = () => {
+      printWindow.print();
+    };
+  } 
+  else if (["jpg", "jpeg", "png", "gif"].includes(extension)) {
+    // Image: open in new window and embed in HTML for printing
+    const img = new Image();
+    img.src = url;
+    img.onload = () => {
+      const printWindow = window.open("", "_blank");
+      printWindow.document.write(`<html><head><title>Print Image</title></head><body style="text-align:center;margin:0;"><img src="${url}" style="max-width:100%;height:auto;margin-top:20px;"></body></html>`);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+    };
+  } 
+  else if (["doc", "docx", "xls", "xlsx"].includes(extension)) {
+    alert(
+      "Printing Word or Excel files is not supported directly. Please download the file and print it from your computer."
+    );
+  } 
+  else {
+    alert("Unsupported file type for printing.");
+  }
+};
+
+
   // ======================
   // Filters
   // ======================
@@ -407,6 +444,22 @@ function RecordTable() {
                       <i className="bi bi-download"></i>
                     </Button>
                   </OverlayTrigger>
+
+{/* Print */}
+<OverlayTrigger
+  placement="top"
+  overlay={<Tooltip id={`tooltip-print-${record.id}`}>Print</Tooltip>}
+>
+  <Button
+    variant="outline-warning"
+    size="sm"
+    className="me-1"
+    onClick={() => handlePrint(record)}
+  >
+    <i className="bi bi-printer"></i>
+  </Button>
+</OverlayTrigger>
+
 
                   {/* Delete */}
                   <OverlayTrigger
